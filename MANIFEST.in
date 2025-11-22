@@ -1,0 +1,7 @@
+include README.md
+include LICENSE
+include pyproject.toml
+recursive-include shadowlib *.py
+recursive-include tests *.py
+prune tests/__pycache__
+prune shadowlib/__pycache__

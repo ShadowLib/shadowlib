@@ -1,0 +1,30 @@
+"""
+Auto-generated VarClient constants from RuneLite API
+DO NOT EDIT MANUALLY
+"""
+
+
+class VarClientInt:
+    """VarClientInt constants from RuneLite API."""
+
+    BANK_SCROLL = 51
+    BLOCK_KEYPRESS = 187
+    CAMERA_ZOOM_FIXED_VIEWPORT = 73
+    CAMERA_ZOOM_RESIZABLE_VIEWPORT = 74
+    INPUT_TYPE = 5
+    INVENTORY_TAB = 171
+    MEMBERSHIP_STATUS = 103
+    TOOLTIP_TIMEOUT = 1
+    TOOLTIP_VISIBLE = 2
+    WORLD_MAP_SEARCH_FOCUSED = 190
+
+
+class VarClientStr:
+    """VarClientStr constants from RuneLite API."""
+
+    CHATBOX_TYPED_TEXT = 335
+    INPUT_TEXT = 359
+    NOTIFICATION_BOTTOM_TEXT = 388
+    NOTIFICATION_TOP_TEXT = 387
+    PRIVATE_MESSAGE_TARGET = 360
+    RECENT_FRIENDS_CHAT = 362
