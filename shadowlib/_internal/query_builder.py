@@ -1061,7 +1061,7 @@ class QueryRef:
                 **kwargs,
             )
 
-        return dynamic_method
+        return dynamicMethod
 
     def __repr__(self) -> str:
         return f"QueryRef({self.ref_id}, type={self.return_type})"
