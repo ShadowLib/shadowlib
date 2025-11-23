@@ -51,13 +51,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install build twine
 
-      - name: Build Python package
-        run: python -m build
-
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
+
+      - name: Build Python package
+        run: |
+          # Clean any old builds first
+          rm -rf dist/ build/ *.egg-info
+          python -m build
 
       - name: Publish to PyPI
         if: github.ref == 'refs/heads/main'
@@ -67,6 +70,6 @@ jobs:
         run: |
           # Only publish if dist/ was created (i.e., a release happened)
           if [ -d "dist" ] && [ "$(ls -A dist)" ]; then
-            twine upload dist/* || echo "⚠️ Upload failed or already exists"
+            twine upload dist/* --skip-existing || echo "⚠️ Upload failed or version already exists"
           fi
         continue-on-error: true

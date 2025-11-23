@@ -56,7 +56,8 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "sed -i 's/version = \".*\"/version = \"${nextRelease.version}\"/' pyproject.toml && sed -i 's/__version__ = \".*\"/__version__ = \"${nextRelease.version}\"/' shadowlib/__init__.py"
+        "verifyConditionsCmd": "echo 'Verifying release conditions'",
+        "prepareCmd": "echo 'Updating version to ${nextRelease.version}' && sed -i 's/version = \".*\"/version = \"${nextRelease.version}\"/' pyproject.toml && sed -i 's/__version__ = \".*\"/__version__ = \"${nextRelease.version}\"/' shadowlib/__init__.py"
       }
     ],
     [
