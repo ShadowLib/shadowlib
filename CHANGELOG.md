@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.5](https://github.com/ShadowLib/shadowlib/compare/v2.0.4...v2.0.5) (2025-11-23)
+
+### 🐛 Bug Fixes
+
+* **query:** correct variable name in QueryRef.__getattr__ ([08e1021](https://github.com/ShadowLib/shadowlib/commit/08e10211073a95412c041623e67d8dac447720bc))
+
 ## [2.0.4](https://github.com/ShadowLib/shadowlib/compare/v2.0.3...v2.0.4) (2025-11-23)
 
 ### ♻️ Refactoring
