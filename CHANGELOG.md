@@ -37,6 +37,56 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 * **ci:** correct version sync in release workflow ([5b7c794](https://github.com/ShadowLib/shadowlib/commit/5b7c794edd34866344889040e95f814ae62bff27))
 * **ci:** prevent sed from modifying ruff target-version ([08b4b07](https://github.com/ShadowLib/shadowlib/commit/08b4b07179f8150ae77887629935011ad923f018))
+* **lint:** add ignores for Python 3.12+ upgrade compatibility ([25bc9b3](https://github.com/ShadowLib/shadowlib/commit/25bc9b33ff373493c0b57005fd5419876cbc2df6))
+* update project URLs and ruff version ([077da2d](https://github.com/ShadowLib/shadowlib/commit/077da2d47fbd56128ef3e8bb007c102444e08fe5))
+
+### 📚 Documentation
+
+* add commit convention quick reference guide ([f23d39e](https://github.com/ShadowLib/shadowlib/commit/f23d39e7f12daaa9fdc887dc550d3495cb522970))
+
+### ♻️ Refactoring
+
+* **ci:** consolidate workflows and upgrade to Python 3.12+ ([c3283b5](https://github.com/ShadowLib/shadowlib/commit/c3283b536478f8d3c612f2f16fcd58f6dd37e784))
+
+### 👷 CI/CD
+
+* add semantic-release and quality check workflows ([51d420c](https://github.com/ShadowLib/shadowlib/commit/51d420c36510d7d3c54f573ee32bea64dfaf45e1))
+
+## 1.0.0 (2025-11-23)
+
+### ⚠ BREAKING CHANGES
+
+* Generated files and resources now stored in user cache
+directory instead of package directory. Old data/ folder no longer used.
+
+Changes:
+- Add centralized CacheManager for path management
+- Add dynamic loader for generated modules from cache
+- Update all components to use cache paths (resources, scraper, updater)
+- Fix circular imports with lazy-loading in query_builder
+- Update proxy generator to use absolute imports
+- Remove 7.5MB of generated files from package (84% size reduction)
+- Package size: 1.8MB -> 296KB
+
+Cache structure:
+~/.cache/shadowlib/
+├── generated/ (proxy classes, constants)
+└── data/ (objects DB, varps, API data)
+
+First import automatically downloads and generates all required files.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
+### ✨ Features
+
+* migrate to XDG cache directory for generated files and resources ([c369c31](https://github.com/ShadowLib/shadowlib/commit/c369c319b83c87112a4619060f70b7a782604073))
+
+### 🐛 Bug Fixes
+
+* **ci:** correct version sync in release workflow ([5b7c794](https://github.com/ShadowLib/shadowlib/commit/5b7c794edd34866344889040e95f814ae62bff27))
+* **ci:** prevent sed from modifying ruff target-version ([08b4b07](https://github.com/ShadowLib/shadowlib/commit/08b4b07179f8150ae77887629935011ad923f018))
 * update project URLs and ruff version ([077da2d](https://github.com/ShadowLib/shadowlib/commit/077da2d47fbd56128ef3e8bb007c102444e08fe5))
 
 ### 📚 Documentation
