@@ -7,7 +7,7 @@ name = "shadowlib"
 version = "1.0.0"
 description = "OSRS Bot Development SDK with game-native structure"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 authors = [
     {name = "ShadowBot Team"}
@@ -18,10 +18,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Games/Entertainment",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -68,7 +64,7 @@ shadowlib = [
 
 # Ruff configuration
 [tool.ruff]
-target-version = "1.0.0"
+target-version = "py312"
 line-length = 100
 indent-width = 4
 exclude = [
@@ -105,7 +101,7 @@ ignore = [
     "N816",  # Variable in global scope should not be mixedCase (allow camelCase for module functions)
     "F821",  # Undefined name (many are dynamically generated at runtime)
     "F822",  # Undefined name in __all__ (dynamically generated)
-    "UP006", # Use `dict` instead of `Dict` (we support Python 3.8)
+    "UP006", # Use `dict` instead of `Dict` (for consistency with existing code)
     "TC004", # Move import out of TYPE_CHECKING (needed at runtime in some cases)
     "E501",  # Line too long (already handled by formatter)
     "SIM102", # Use single if statement (nested ifs are often more readable)
@@ -134,7 +130,7 @@ known-first-party = ["shadowlib"]
 
 # Pytest configuration
 [tool.pytest.ini_options]
-minversion = "1.0.0"
+minversion = "7.4.0"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
@@ -181,7 +177,7 @@ exclude_lines = [
 
 # MyPy configuration
 [tool.mypy]
-python_version = "1.0.0"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
