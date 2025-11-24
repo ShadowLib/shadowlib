@@ -88,8 +88,7 @@ class NamingChecker(ast.NodeVisitor):
         Examples: ItemID, ObjectID, event_cache
         """
         return any(
-            (isinstance(dec, ast.Name) and dec.id == "property")
-            for dec in node.decorator_list
+            (isinstance(dec, ast.Name) and dec.id == "property") for dec in node.decorator_list
         )
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
