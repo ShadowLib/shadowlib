@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.1.0](https://github.com/ShadowLib/shadowlib/compare/v2.0.7...v2.1.0) (2025-11-24)
+
+### ✨ Features
+
+* **types:** add Widget mask builder with IDE autocomplete support ([1535e5e](https://github.com/ShadowLib/shadowlib/commit/1535e5eccae2ca6d7b3076d89073916cc5792822))
+
+### 💄 Styles
+
+* format check_naming.py with ruff ([26f7d1a](https://github.com/ShadowLib/shadowlib/commit/26f7d1a724778f88ad798e5b7ffeeee1b94728ef))
+
+### ♻️ Refactoring
+
+* consolidate packed position utilities and improve event consumer warmup ([97e952e](https://github.com/ShadowLib/shadowlib/commit/97e952e66829a5190041153a2ca02c0000b42da7))
+
 ## [2.0.7](https://github.com/ShadowLib/shadowlib/compare/v2.0.6...v2.0.7) (2025-11-23)
 
 ### ♻️ Refactoring
