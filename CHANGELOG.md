@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.2.1](https://github.com/ShadowLib/shadowlib/compare/v2.2.0...v2.2.1) (2025-11-25)
+
+### ♻️ Refactoring
+
+* streamline resources module and merge cache utilities ([3e619c6](https://github.com/ShadowLib/shadowlib/commit/3e619c64dbc92efdc87c7fdcf2ceaccfb54ee882))
+
 ## [2.2.0](https://github.com/ShadowLib/shadowlib/compare/v2.1.0...v2.2.0) (2025-11-24)
 
 ### ✨ Features
