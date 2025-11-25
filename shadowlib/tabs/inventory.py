@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 from shadowlib.types.gametab import GameTab, GameTabs
 from shadowlib.types.item import Item
 from shadowlib.types.itemcontainer import ItemContainer
-from shadowlib.utilities.geometry import createGrid
+from shadowlib.types.box import createGrid, Box
 from shadowlib.utilities.item_names import getFormattedItemName, getItemName
 
 
@@ -47,285 +47,47 @@ class Inventory(GameTabs, ItemContainer):
             padding=1,  # 2px padding on all sides to avoid edge misclicks
         )
 
-    def _syncItemsFromCache(self) -> None:
+    @property
+    def items(self):
+        """Auto-sync items from cache when accessed."""
+        cached = self.client.cache.getItemContainer(self.INVENTORY_ID)
+        self._items = cached.items
+        return self._items
+    
+    def getSlotBox(self, slot_index: int) ->  Box:
         """
-        Sync items list from cache data.
-        Converts cache IDs and quantities to Item objects.
-        """
-        item_ids = self.getItemIds()
-        quantities = self.getItemQuantities()
-
-        self.items = []
-        for item_id, quantity in zip(item_ids, quantities, strict=False):
-            if item_id == -1:
-                self.items.append(None)
-            else:
-                # Create Item from cache data
-                item = Item(
-                    id=item_id,
-                    name=getItemName(item_id) or "Unknown",
-                    quantity=quantity,
-                    noted=False,  # TODO: Detect noted items from cache if available
-                )
-                self.items.append(item)
-
-    def getItemIds(self) -> List[int]:
-        """
-        Get all items in the inventory.
-
-        Returns:
-            List of item IDs in inventory slots (length 28).
-        """
-        # Ensure cache is initialized
-        items = self.client.cache["inventory"]
-
-        if len(items) < 28:
-            # Adding -1 for empty slots if fewer than 28 items
-            items += [-1] * (28 - len(items))
-
-        return items
-
-    def getItemQuantities(self) -> List[int]:
-        """
-        Get all item quantities in the inventory.
-
-        Returns:
-            List of item quantities in inventory slots (length 28).
-        """
-        # Ensure cache is initialized
-        quantities = self.client.cache["inventory_quantities"]
-
-        if len(quantities) < 28:
-            # Adding 0 for empty slots if fewer than 28 items
-            quantities += [0] * (28 - len(quantities))
-
-        return quantities
-
-    def slotsUsed(self) -> int:
-        """
-        Get number of used inventory slots.
-
-        Returns:
-            Number of non-empty inventory slots (0-28).
-        """
-        items = self.getItemIds()
-        return sum(1 for item in items if item != -1)
-
-    def totalQuantity(self) -> int:
-        """
-        Get total quantity of all items in inventory.
-
-        Returns:
-            Sum of quantities of all items in inventory.
-        """
-        quantities = self.getItemQuantities()
-        return sum(quantities)
-
-    def getItemsWithNames(self, formatted: bool = False) -> List[Dict[str, Any]]:
-        """
-        Get all items in inventory with their names and quantities.
+        Get the Box area for a specific inventory slot.
 
         Args:
-            formatted: If True, uses human-readable names (e.g., "Dragon Scimitar").
-                      If False, uses raw names (e.g., "DRAGON_SCIMITAR").
-
+            slot_index: Slot index (0-27)
         Returns:
-            List of dictionaries containing item info for each slot:
-            [
-                {
-                    'slot': 0,
-                    'id': 4587,
-                    'name': 'Dragon Scimitar' or 'DRAGON_SCIMITAR',
-                    'quantity': 1
-                },
-                ...
-            ]
-            Empty slots have id=-1 and name=None.
-
-        Example:
-            # Get all items with formatted names
-            items = inventory.getItemsWithNames(formatted=True)
-            for item in items:
-                if item['id'] != -1:
-                    print(f"Slot {item['slot']}: {item['name']} x{item['quantity']}")
-
-            # Get all items with raw names
-            items = inventory.getItemsWithNames()
-            for item in items:
-                if item['name'] == 'DRAGON_SCIMITAR':
-                    print(f"Found Dragon Scimitar in slot {item['slot']}")
+            Box area of the specified slot
         """
-        ids = self.getItemIds()
-        quantities = self.getItemQuantities()
-
-        result = []
-        name_func = getFormattedItemName if formatted else getItemName
-
-        for slot, (item_id, quantity) in enumerate(zip(ids, quantities, strict=False)):
-            result.append(
-                {
-                    "slot": slot,
-                    "id": item_id,
-                    "name": name_func(item_id) if item_id != -1 else None,
-                    "quantity": quantity,
-                }
-            )
-
-        return result
-
-    def getNonEmptyItemsWithNames(self, formatted: bool = False) -> List[Dict[str, Any]]:
+        return self.slots[slot_index]
+    
+    def hoverSlot(self, slot_index: int) -> bool:
         """
-        Get only non-empty inventory slots with their names and quantities.
+        Hover over a specific inventory slot regardless of contents.
 
         Args:
-            formatted: If True, uses human-readable names (e.g., "Dragon Scimitar").
-                      If False, uses raw names (e.g., "DRAGON_SCIMITAR").
+            slot_index: Slot index (0-27) to hover
 
         Returns:
-            List of dictionaries containing item info (empty slots excluded):
-            [
-                {
-                    'slot': 0,
-                    'id': 4587,
-                    'name': 'Dragon Scimitar' or 'DRAGON_SCIMITAR',
-                    'quantity': 1
-                },
-                ...
-            ]
+            True if slot index is valid, False otherwise
 
         Example:
-            # Get only items that exist (no empty slots)
-            items = inventory.getNonEmptyItemsWithNames(formatted=True)
-            print(f"You have {len(items)} items:")
-            for item in items:
-                print(f"  {item['name']} x{item['quantity']}")
+            # Hover over slot 0 (top-left)
+            inventory.hoverSlot(0)
+
+            # Hover over slot 27 (bottom-right)
+            inventory.hoverSlot(27)
         """
-        all_items = self.getItemsWithNames(formatted=formatted)
-        return [item for item in all_items if item["id"] != -1]
+        if 0 <= slot_index < 28:
+            self.getSlotBox(slot_index).hover()
+            return True
+        return False
 
-    def containsItem(self, item_id: int) -> bool:
-        """
-        Check if inventory contains at least one of an item.
-
-        Args:
-            item_id: The item ID to check for
-        Returns:
-            True if item exists in inventory, False otherwise
-
-        Example:
-            if inventory.contains(1511):
-                print("You have logs!")
-        """
-        items = self.getItemIds()
-        return item_id in items
-
-    def findItemSlots(self, item_id: int) -> List[int]:
-        """
-        Find all inventory slots containing a specific item.
-
-        Args:
-            item_id: The item ID to search for
-
-        Returns:
-            List of slot indices (0-27) where the item is found.
-            Empty list if item not found.
-
-        Example:
-            slots = inventory.findItemSlots(1511)  # Normal logs
-            print(f"Logs found in slots: {slots}")
-        """
-        items = self.getItemIds()
-        return [index for index, id in enumerate(items) if id == item_id]
-
-    def getItemCount(self, item_id: int) -> int:
-        """
-        Count how many of a specific item are in inventory.
-
-        Args:
-            item_id: The item ID to count
-
-        Returns:
-            Number of items with that ID
-
-        Example:
-            logs_count = inventory.getItemCount(1511)  # Normal logs
-            print(f"You have {logs_count} logs")
-        """
-        slots = self.findItemSlots(item_id)
-        if not slots:
-            return 0
-
-        items, counts = self.getItemIds(), self.getItemQuantities()
-        # filter slots to only those containing the item
-        filtereditems, filteredcounts = (
-            [item for index, item in enumerate(items) if index in slots],
-            [count for index, count in enumerate(counts) if index in slots],
-        )
-
-        if len(filtereditems) > 1:
-            return len(filtereditems)
-        return filteredcounts[0]
-
-    def contains(self, item_id: int) -> bool:
-        """
-        Check if inventory contains at least one of an item.
-
-        Args:
-            item_id: The item ID to check for
-
-        Returns:
-            True if item exists in inventory, False otherwise
-
-        Example:
-            if inventory.contains(1511):
-                print("You have logs!")
-        """
-        return self.getItemCount(item_id) > 0
-
-    def isFull(self) -> bool:
-        """
-        Check if inventory is full (28 items).
-
-        Returns:
-            True if inventory has 28 items, False otherwise
-
-        Example:
-            if inventory.isFull():
-                print("Inventory is full, time to bank!")
-        """
-        items = self.getItemIds()
-        # Count non-empty slots (item ID != -1)
-        return sum(1 for item in items if item != -1) >= 28
-
-    def isEmpty(self) -> bool:
-        """
-        Check if inventory is empty.
-
-        Returns:
-            True if inventory has no items, False otherwise
-
-        Example:
-            if inventory.isEmpty():
-                print("Inventory is empty, ready to start!")
-        """
-        items = self.getItemIds()
-        return all(item == -1 for item in items)
-
-    def countEmptySlots(self) -> int:
-        """
-        Get number of free inventory slots.
-
-        Returns:
-            Number of empty slots (0-28)
-
-        Example:
-            free = inventory.get_free_slots()
-            print(f"You have {free} free slots")
-        """
-        items = self.getItemIds()
-        return sum(1 for item in items if item == -1)
-
-    def hoverItem(self, item_id: int, slot_index: int | None = None, duration: float = 0.2) -> bool:
+    def hoverItem(self, item_id: int, random: bool = False) -> bool:
         """
         Hover over an item in the inventory.
 
@@ -344,22 +106,23 @@ class Inventory(GameTabs, ItemContainer):
             # Hover over logs in slot 5
             inventory.hoverItem(1511, slot_index=5)
         """
-        if slot_index is not None:
-            # Hover specific slot
-            if 0 <= slot_index < 28:
-                items = self.getItemIds()
-                if items[slot_index] == item_id:
-                    self.slots[slot_index].hover(duration=duration)
-                    return True
-            return False
+        if not random:
+            # Find first slot with the item
+            slot = self.findItemSlot(item_id)
+            if slot is None:
+                return False
 
-        # Find first slot with the item
-        slots = self.findItemSlots(item_id)
-        if not slots:
+            # Hover the first slot
+            self.slots[slot].hover()
+            return True
+
+        found_slots = self.findItemSlots(item_id)
+        selected_slot = random.choice(found_slots) if found_slots else None
+        if selected_slot is None:
             return False
 
         # Hover the first slot
-        self.slots[slots[0]].hover(duration=duration)
+        self.slots[selected_slot].hover()
         return True
 
     def hoverSlot(self, slot_index: int, duration: float = 0.2) -> bool:
@@ -381,7 +144,29 @@ class Inventory(GameTabs, ItemContainer):
             inventory.hoverSlot(27)
         """
         if 0 <= slot_index < 28:
-            self.slots[slot_index].hover(duration=duration)
+            self.slots[slot_index].hover()
+            return True
+        return False
+    
+    def clickSlot(self, slot_index: int) -> bool:
+        """
+        Click a specific inventory slot regardless of contents.
+
+        Args:
+            slot_index: Slot index (0-27) to click
+
+        Returns:
+            True if slot index is valid, False otherwise
+
+        Example:
+            # Click slot 0 (top-left)
+            inventory.clickSlot(0)
+
+            # Click slot 27 (bottom-right)
+            inventory.clickSlot(27)
+        """
+        if self.hoverSlot(slot_index):
+            # self.client.input.mouse.leftClick()
             return True
         return False
 
@@ -413,10 +198,10 @@ class Inventory(GameTabs, ItemContainer):
         """
         if slot_index is not None:
             # Click specific slot
-            if 0 <= slot_index < 28:
+            if 0 <= slot_index < 28 and self.hoverSlot(slot_index):
                 items = self.getItemIds()
                 if items[slot_index] == item_id:
-                    self.slots[slot_index].click(button=button, duration=duration)
+                    self.slots[slot_index].click(button=button)
                     return True
             return False
 
@@ -426,7 +211,7 @@ class Inventory(GameTabs, ItemContainer):
             return False
 
         # Click the first slot
-        self.slots[slots[0]].click(button=button, duration=duration)
+        self.slots[slots[0]].click(button=button, )
         return True
 
     def isShiftDropEnabled(self) -> bool:
@@ -440,7 +225,7 @@ class Inventory(GameTabs, ItemContainer):
             if inventory.isShiftDropEnabled():
                 print("Shift-drop is enabled!")
         """
-        from shadowlib.resources import varps
+        from shadowlib._internal.resources import varps
 
         varbit_value = varps.getVarbitByName("DESKTOP_SHIFTCLICKDROP_ENABLED")
         return varbit_value == 1
@@ -518,7 +303,7 @@ class Inventory(GameTabs, ItemContainer):
             return 0
 
         # Use drop_slots for the actual dropping logic
-        return self.dropSlots(slots, duration=duration, force_shift=force_shift)
+        return self.dropSlots(slots, , force_shift=force_shift)
 
     def dropItems(
         self, item_ids: List[int], duration: float = 0.2, force_shift: bool = False
@@ -555,7 +340,7 @@ class Inventory(GameTabs, ItemContainer):
             return 0
 
         # Use drop_slots for the actual dropping logic
-        return self.dropSlots(all_slots, duration=duration, force_shift=force_shift)
+        return self.dropSlots(all_slots, , force_shift=force_shift)
 
     def dropSlots(
         self, slot_indices: List[int], duration: float = 0.2, force_shift: bool = False
@@ -603,7 +388,7 @@ class Inventory(GameTabs, ItemContainer):
 
             for slot_index in slot_indices:
                 # Hover over the slot
-                self.slots[slot_index].hover(duration=duration)
+                self.slots[slot_index].hover()
 
                 # Wait for Drop option to appear in menu
                 if not self.waitDropOption():
@@ -611,7 +396,7 @@ class Inventory(GameTabs, ItemContainer):
                     continue  # Skip if Drop option not available
 
                 # Click Drop option with fresh cache
-                if menu.clickOption("Drop", duration=duration):
+                if menu.clickOption("Drop", ):
                     dropped_count += 1
         finally:
             if use_shift_drop:
@@ -656,7 +441,7 @@ class Inventory(GameTabs, ItemContainer):
             target_slot = slots[0]
 
         # Click the item to select it
-        self.slots[target_slot].click(button="left", duration=duration)
+        self.slots[target_slot].click(button="left", )
 
         # TODO: Verify selection with new cache system when implemented
         return True
@@ -697,11 +482,11 @@ class Inventory(GameTabs, ItemContainer):
         from ..menu import Menu
 
         # Step 1: Select the first item
-        if not self.selectItem(item1_id, slot_index=item1_slot, duration=duration):
+        if not self.selectItem(item1_id, slot_index=item1_slot, ):
             return False
 
         # Step 2: Hover over the second item
-        if not self.hoverItem(item2_id, slot_index=item2_slot, duration=duration):
+        if not self.hoverItem(item2_id, slot_index=item2_slot, ):
             return False
 
         # Step 3: Click the menu option with '->' in it
@@ -711,7 +496,7 @@ class Inventory(GameTabs, ItemContainer):
         for option in options:
             if "->" in option:
                 # Found the "Use X -> Y" option
-                return menu.clickOption(option, duration=duration)
+                return menu.clickOption(option, )
 
         return False
 
@@ -735,6 +520,6 @@ class Inventory(GameTabs, ItemContainer):
             inventory.clickSlot(27, button='right')
         """
         if 0 <= slot_index < 28:
-            self.slots[slot_index].click(button=button, duration=duration)
+            self.slots[slot_index].click(button=button, )
             return True
         return False

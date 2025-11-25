@@ -30,7 +30,7 @@ def _loadProxies():
     if _proxies_loaded:
         return _query_proxies
 
-    from .generated_loader import ensureGeneratedFiles, loadGeneratedModule
+    from .cache_manager import ensureGeneratedFiles, loadGeneratedModule
 
     # Ensure generated files exist
     ensureGeneratedFiles()

@@ -36,8 +36,7 @@ def _checkResourceUpdates():
     """
     Check for game resource updates (varps, objects).
 
-    Only checks once per session. Updates all resources atomically
-    to prevent desync (they share metadata.json).
+    Only checks once per session. Downloads and loads resources if needed.
     """
     global _resources_checked
 
@@ -45,25 +44,17 @@ def _checkResourceUpdates():
         return
 
     try:
-        from shadowlib._internal.updater.resources import ResourceUpdater
+        from shadowlib._internal.cache_manager import ensureResourcesLoaded
 
-        updater = ResourceUpdater()
-
-        # Check and update all resources atomically
-        # If varps needs update, objects gets updated too (they share metadata)
-        needs_update, reason = updater.shouldUpdate()
-
-        if needs_update:
-            print(f"📦 {reason}")
-            if not updater.updateAll(force=False):
-                print("⚠️  Some resources failed to update")
-        # Silent if up to date
+        # Download and load resources (handles version checking internally)
+        if not ensureResourcesLoaded():
+            print("⚠️  Some resources failed to load")
 
         _resources_checked = True
 
     except Exception as e:
         # Don't fail client init if resource check fails
-        print(f"⚠️  Resource update check failed: {e}")
+        print(f"⚠️  Resource loading failed: {e}")
         import traceback
 
         traceback.print_exc()

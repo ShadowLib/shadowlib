@@ -6,8 +6,8 @@ import math
 import random
 
 from shadowlib.globals import getClient
+from shadowlib.types.box import Box, createGrid
 from shadowlib.utilities import timing
-from shadowlib.utilities.geometry import Area, createGrid
 
 
 class BankItem:
@@ -40,15 +40,15 @@ class Bank:
             client: Optional Client instance. If None, uses global Client.
         """
         self.client = client or getClient()
-        self.deposit_all_button = Area(425, 295, 461, 331)
-        self.deposit_gear_button = Area(462, 295, 498, 331)
-        self.withdraw_item_button = Area(121, 310, 171, 332)
-        self.withdraw_note_button = Area(172, 310, 222, 332)
-        self.withdraw_1_button = Area(221, 310, 246, 332)
-        self.withdraw_5_button = Area(246, 310, 271, 332)
-        self.withdraw_10_button = Area(271, 310, 296, 332)
-        self.withdraw_x_button = Area(296, 310, 321, 332)
-        self.withdraw_all_button = Area(321, 310, 346, 332)
+        self.deposit_all_button = Box(425, 295, 461, 331)
+        self.deposit_gear_button = Box(462, 295, 498, 331)
+        self.withdraw_item_button = Box(121, 310, 171, 332)
+        self.withdraw_note_button = Box(172, 310, 222, 332)
+        self.withdraw_1_button = Box(221, 310, 246, 332)
+        self.withdraw_5_button = Box(246, 310, 271, 332)
+        self.withdraw_10_button = Box(271, 310, 296, 332)
+        self.withdraw_x_button = Box(296, 310, 321, 332)
+        self.withdraw_all_button = Box(321, 310, 346, 332)
         self.quantity_buttons = {
             "1": self.withdraw_1_button,
             "5": self.withdraw_5_button,
@@ -56,12 +56,14 @@ class Bank:
             "X": self.withdraw_x_button,
             "All": self.withdraw_all_button,
         }
-        self.search_button = Area(386, 295, 422, 331)
-        self.settings_button = Area(467, 48, 492, 73)
-        self.tab_buttons = createGrid(62, 45, 36, 32, 9, 1, 5, 0)
+        self.search_button = Box(386, 295, 422, 331)
+        self.settings_button = Box(467, 48, 492, 73)
+        self.tab_buttons = createGrid(
+            startX=62, startY=45, width=36, height=32, columns=9, rows=1, spacingX=5, spacingY=0
+        )
         self.is_setup = False
         self.capacity = 920
-        self.bank_area = Area(62, 83, 482, 293)
+        self.bank_area = Box(62, 83, 482, 293)
         self.bank_cache = {"lasttime": 0, "items": [], "quantities": []}
 
     def isOpen(self) -> bool:
@@ -254,7 +256,7 @@ class Bank:
 
         return items.index(item_id)
 
-    def getItemArea(self, item_id: int) -> Area | None:
+    def getItemArea(self, item_id: int) -> Box | None:
         index = self.getIndex(item_id)
 
         if index is None:
@@ -270,7 +272,7 @@ class Bank:
             if result["results"]["hidden"]:
                 return None
             rectdata = result["results"]["rect"]
-            return Area(
+            return Box(
                 rectdata["x"],
                 rectdata["y"],
                 rectdata["x"] + rectdata["width"],
@@ -280,10 +282,10 @@ class Bank:
             print(f"Error getting item area: {e}")
             return None
 
-    def isAreaClickable(self, area: Area) -> bool:
+    def isAreaClickable(self, area: Box) -> bool:
         return 83 <= area.y1 <= 257
 
-    def getScrollCount(self, area: Area) -> tuple[int, bool]:
+    def getScrollCount(self, area: Box) -> tuple[int, bool]:
         """
         Returns:
             (scroll_count, scroll_up)
@@ -318,7 +320,7 @@ class Bank:
             k = random.randint(k_min, k_max)
             return k, scroll_up
 
-    def makeItemVisible(self, item_id: int) -> Area | None:
+    def makeItemVisible(self, item_id: int) -> Box | None:
         items, quantities = self.getAllItems()
 
         if item_id not in items:

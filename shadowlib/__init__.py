@@ -9,7 +9,7 @@ __version__ = "2.0.7"
 __author__ = "ShadowBot Team"
 
 # Ensure generated files path is available for imports
-from shadowlib._internal.generated_loader import ensureGeneratedInPath
+from shadowlib._internal.cache_manager import ensureGeneratedInPath
 
 ensureGeneratedInPath()
 

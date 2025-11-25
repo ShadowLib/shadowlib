@@ -26,7 +26,7 @@ class ItemNames:
         # Load ItemID from cache
         global ItemID
         if ItemID is None:
-            from .._internal.generated_loader import loadGeneratedModule
+            from .._internal.cache_manager import loadGeneratedModule
 
             constants = loadGeneratedModule("constants")
             if constants is None:

@@ -337,18 +337,39 @@ class Client:
             self._player = Player(self)
         return self._player
 
-    # Resources
-    def getVarps(self):
-        """Get varps/varbits resource manager."""
-        from shadowlib.resources import varps
+    # Resources namespace
+    @property
+    def resources(self):
+        """
+        Access game resources (varps, objects).
 
-        return varps
+        Returns:
+            ResourcesNamespace with .varps and .objects
 
-    def getObjects(self):
-        """Get objects resource manager."""
-        from shadowlib.resources import objects
+        Example:
+            >>> quest_points = client.resources.varps.getVarpByName("quest_points")
+            >>> tree = client.resources.objects.getById(1276)
+        """
+        if not hasattr(self, "_resources_namespace"):
+            self._resources_namespace = self._ResourcesNamespace()
+        return self._resources_namespace
 
-        return objects
+    class _ResourcesNamespace:
+        """Namespace for accessing game resources."""
+
+        @property
+        def varps(self):
+            """Access varps/varbits functions."""
+            from shadowlib._internal.resources import varps
+
+            return varps
+
+        @property
+        def objects(self):
+            """Access objects functions."""
+            from shadowlib._internal.resources import objects
+
+            return objects
 
     @property
     def cache(self):

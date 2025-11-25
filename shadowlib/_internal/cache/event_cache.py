@@ -11,6 +11,7 @@ from typing import Any, Dict, List
 from shadowlib.utilities.timing import waitUntil
 
 from .state_builder import StateBuilder
+from shadowlib.types import ItemContainer
 
 
 class EventCache:
@@ -274,6 +275,26 @@ class EventCache:
                     self._state.ground_items_initialized = True
 
             return self._state.latest_states.get("ground_items", {}).copy()
+        
+    def getItemContainer(self, container_id: int) -> ItemContainer | None:
+        """
+        Get current item container state by ID.
+
+        Args:
+            container_id: Container ID (93=inventory, 94=equipment, 95=bank)
+
+        Returns:
+            ItemContainer object or None if not found
+        """
+        with self._lock:
+            containers = self._state.itemcontainers
+            if not containers:
+                return None
+            
+            if container_id not in containers:
+                containers[container_id] = ItemContainer(container_id, -1)
+
+            return self._state.itemcontainers.get(container_id, None)
 
 
 if __name__ == "__main__":
