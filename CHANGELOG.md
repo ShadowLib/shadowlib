@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.2.2](https://github.com/ShadowLib/shadowlib/compare/v2.2.1...v2.2.2) (2025-11-25)
+
+### 🐛 Bug Fixes
+
+* add type stubs for varps and objects modules ([d06696b](https://github.com/ShadowLib/shadowlib/commit/d06696befee34325727de299ff3bce2ee4f57605))
+* update client.pyi stub to include resources namespace ([b0b3e45](https://github.com/ShadowLib/shadowlib/commit/b0b3e454075b5ed53077d28a6c71c29682944797))
+* use module imports for resources type hints ([3a06dd3](https://github.com/ShadowLib/shadowlib/commit/3a06dd39b378f968802cd350a70fd7773009f503))
+
+### 💄 Styles
+
+* fix linting and formatting issues ([0d4fe16](https://github.com/ShadowLib/shadowlib/commit/0d4fe164d109fdaa87acb169eb7f38c1914978a6))
+
+### ♻️ Refactoring
+
+* streamline resources module and merge cache utilities ([0280441](https://github.com/ShadowLib/shadowlib/commit/0280441b41c0b82105a6d052050d21bf6598142f))
+
 ## [2.2.1](https://github.com/ShadowLib/shadowlib/compare/v2.2.0...v2.2.1) (2025-11-25)
 
 ### ♻️ Refactoring
