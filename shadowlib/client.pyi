@@ -1,6 +1,7 @@
 """Type stubs for Client class."""
 
 from typing import Any, Optional
+from types import ModuleType
 
 from shadowlib._internal.api import RuneLiteAPI
 from shadowlib._internal.cache.event_cache import EventCache
@@ -15,9 +16,9 @@ from shadowlib.world import World
 class _ResourcesNamespace:
     """Namespace for accessing game resources."""
     @property
-    def varps(self) -> Any: ...
+    def varps(self) -> ModuleType: ...
     @property
-    def objects(self) -> Any: ...
+    def objects(self) -> ModuleType: ...
 
 class Client:
     """
