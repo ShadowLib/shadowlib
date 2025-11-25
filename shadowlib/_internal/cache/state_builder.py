@@ -15,7 +15,7 @@ import shadowlib.utilities.timing as timing
 from shadowlib._internal.events.channels import LATEST_STATE_CHANNELS
 from shadowlib.globals import getClient
 from shadowlib.tabs.skills import SKILL_NAMES
-from shadowlib.types import Item
+from shadowlib.types import Item, ItemContainer
 
 
 class StateBuilder:
@@ -43,9 +43,7 @@ class StateBuilder:
 
         # Derived state from ring buffer events
         self.varps: List[int] = []  # {varp_id: value}
-        self.inventory: List[Dict[str, Any]] = []  # 28 slots, -1 = empty
-        self.equipment: List[Dict[str, Any]] = []  # {slot: item_id}
-        self.bank: List[Dict[str, Any]] = []  # {item_id: {stack, noted, etc}}
+        
         self.skills: Dict[str, Dict[str, int]] = {}  # {skill_name: {level, xp, boosted_level}}
         self.last_click: Dict[str, Any] = {}  # {button, coords, time}
         self.chat_history: Deque = deque(maxlen=100)  # Last 100 chat messages
@@ -56,6 +54,12 @@ class StateBuilder:
         self._varps_resource = None
 
         self.ground_items_initialized = False
+
+        self.itemcontainers: Dict[int, ItemContainer] = {}
+
+        self.itemcontainers[93] = ItemContainer(93, 28)  # Inventory
+        self.itemcontainers[94] = ItemContainer(94, 14)  # Equipment
+        self.itemcontainers[95] = ItemContainer(95, -1)  # Bank
 
     def addEvent(self, channel: str, event: Dict[str, Any]) -> None:
         """
@@ -209,36 +213,19 @@ class StateBuilder:
             event: Item container changed event dict
         """
         container_id = event.get("container_id")
-        items_dict = event.get("items", {})  # Dict with string keys representing slots
-
-        if container_id == 93:  # Inventory
-            self.inventory = []
-            # Items dict has string keys like '0', '1', etc representing slots
-            for _slot_str, item_data in sorted(items_dict.items(), key=lambda x: int(x[0])):
-                if item_data is None:
-                    self.inventory.append(None)  # Empty slot
-                else:
-                    self.inventory.append(Item.fromDict(item_data))
-
-        elif container_id == 94:  # Equipment
-            self.equipment = []
-            for _slot_str, item_data in sorted(items_dict.items(), key=lambda x: int(x[0])):
-                if item_data is None:
-                    self.equipment.append(None)  # Empty slot
-                else:
-                    self.equipment.append(Item.fromDict(item_data))
-
-        elif container_id == 95:  # Bank
-            self.bank = []
-            for _slot_str, item_data in sorted(items_dict.items(), key=lambda x: int(x[0])):
-                if item_data is None:
-                    self.bank.append(None)  # Empty slot
-                else:
-                    self.bank.append(Item.fromDict(item_data))
+        items_list = event.get("items", [])  
 
         self.recently_changed_containers.append(
             [container_id, time()]
         )  # Keep track of last 100 changed containers
+
+        if not self.itemcontainers.get(container_id):
+            self.itemcontainers[container_id] = ItemContainer(container_id, -1)
+
+        if items_list is None:
+            return None
+        
+        self.itemcontainers[container_id].fromArray(items_list)
 
     def _processStatChanged(self, event: Dict[str, Any]) -> None:
         """

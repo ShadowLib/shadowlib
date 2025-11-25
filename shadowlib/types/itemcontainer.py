@@ -34,45 +34,17 @@ class ItemContainer:
         self.slotCount = slotCount
         self.items = items if items is not None else []
 
-    @classmethod
-    def fromDict(cls, data: Dict[str, Any]) -> "ItemContainer":
+    def fromArray(self, data: List[Dict[str, Any]]): 
         """
-        Convert dict from Java to ItemContainer instance.
-
-        Java sends container data with:
-            - containerId: int
-            - slotCount: int (default -1 for unknown)
-            - items: List of item dicts or None for empty slots
-
+        Populate ItemContainer from array of item dicts.
         Args:
-            data: Dict with 'containerId', 'slotCount', 'items'
-
-        Returns:
-            ItemContainer instance
-
-        Example:
-            data = {
-                'containerId': 93,
-                'slotCount': 28,
-                'items': [
-                    {'id': 995, 'name': 'Coins', 'stack': 1000, 'noted': False},
-                    None,  # Empty slot
-                    {'id': 1333, 'name': 'Rune scimitar', 'stack': 1, 'noted': False}
-                ]
-            }
-            container = ItemContainer.fromDict(data)
-            print(container.getItemCount())  # 2
-        """
-        itemsList = data.get("items", [])
+            data: List of item dicts from Java response
+        """       
         parsedItems = [
-            Item.fromDict(itemData) if itemData is not None else None for itemData in itemsList
+            Item.fromDict(itemData) if itemData is not None else None for itemData in data
         ]
 
-        return cls(
-            containerId=data.get("containerId", -1),
-            slotCount=data.get("slotCount", -1),
-            items=parsedItems,
-        )
+        self.items = parsedItems
 
     def populate(self):
         client = getClient()
@@ -86,7 +58,7 @@ class ItemContainer:
         )
 
         if result:
-            self.fromDict(result)
+            self.fromArray(result)
 
     def toDict(self) -> Dict[str, Any]:
         """
@@ -198,6 +170,53 @@ class ItemContainer:
             else:
                 result.append(None)
         return result
+    
+    def findItemSlot(self, id: int) -> Optional[int]:
+        """
+        Find the first slot index containing an item with the given ID.
+
+        Args:
+            id: Item ID to search for
+
+        Returns:
+            Slot index if found, else None
+        """
+        for index, item in enumerate(self.items):
+            if item is not None and item.id == id:
+                return index
+        return None
+    
+    def findItemSlots(self, id: int) -> List[int]:
+        """
+        Find all slot indices containing items with the given ID.
+
+        Args:
+            id: Item ID to search for
+
+        Returns:
+            List of slot indices
+        """
+        slots = []
+        for index, item in enumerate(self.items):
+            if item is not None and item.id == id:
+                slots.append(index)
+        return slots
+    
+    def findItemSlotsByName(self, name: str) -> List[int]:
+        """
+        Find all slot indices containing items with the given name.
+
+        Args:
+            name: Item name to search for
+
+        Returns:
+            List of slot indices
+        """
+        slots = []
+        for index, item in enumerate(self.items):
+            if item is not None and item.name in name:
+                slots.append(index)
+        return slots
 
     def containsItem(self, id: int) -> bool:
         """

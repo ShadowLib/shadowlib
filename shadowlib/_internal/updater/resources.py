@@ -2,8 +2,8 @@
 """
 Resource Auto-Updater for Varps and Objects Database
 
-Handles automatic version checking and updating of game resources
-separately from RuneLite API updates.
+Handles automatic version checking and updating of game resources.
+Now delegates to cache_manager for actual download/load operations.
 """
 
 from pathlib import Path
@@ -15,21 +15,6 @@ class ResourceUpdater:
     Manages automatic updates for game resources (varps, objects, etc.)
     """
 
-    def __init__(self, project_root: Path | None = None):
-        """
-        Initialize resource updater.
-
-        Args:
-            project_root: Project root directory (auto-detected if None)
-        """
-        if project_root is None:
-            # Auto-detect: go up from this file
-            # shadowlib/_internal/updater/resources.py -> need 4 .parent calls
-            project_root = Path(__file__).parent.parent.parent.parent
-
-        self.project_root = Path(project_root)
-        self.resources_dir = self.project_root / "data" / "resources"
-
     def shouldUpdate(self) -> Tuple[bool, str]:
         """
         Check if game data needs update.
@@ -37,12 +22,16 @@ class ResourceUpdater:
         Returns:
             Tuple of (should_update, reason)
         """
-        from ..resources.game_data import GameDataResource
+        from shadowlib._internal.cache_manager import (
+            _needsUpdate,
+            getCacheManager,
+        )
 
         try:
-            game_data = GameDataResource()
-            # Check if needs update (checks remote metadata)
-            if game_data._needsUpdate():
+            cache_manager = getCacheManager()
+            cache_dir = cache_manager.getDataPath("game_data")
+
+            if _needsUpdate(cache_dir):
                 return True, "Game data update available"
             return False, "Game data up to date"
         except Exception as e:
@@ -65,7 +54,7 @@ class ResourceUpdater:
         print("🔄 Game Data Auto-Updater")
         print("=" * 80)
 
-        # Check if update needed BEFORE downloading
+        # Check if update needed BEFORE downloading (unless forced)
         if not force:
             needs_update, reason = self.shouldUpdate()
             if not needs_update:
@@ -77,10 +66,44 @@ class ResourceUpdater:
         print("\n🔄 Updating game data...")
 
         try:
-            from ..resources.game_data import GameDataResource
+            from shadowlib._internal.cache_manager import (
+                _downloadFile,
+                BASE_URL,
+                getCacheManager,
+            )
 
-            game_data = GameDataResource()
-            game_data.ensureLoaded(force_update=force)
+            cache_manager = getCacheManager()
+            cache_dir = cache_manager.getDataPath("game_data")
+            cache_dir.mkdir(parents=True, exist_ok=True)
+
+            # Force download by deleting existing files
+            if force:
+                print("🔄 Forcing fresh download...")
+                for f in ["metadata.json", "varps.json", "varbits.json", "objects.db"]:
+                    file_path = cache_dir / f
+                    if file_path.exists():
+                        file_path.unlink()
+
+            # Download all files
+            base_url = f"{BASE_URL}/varps/latest"
+            files = {
+                "metadata.json": "metadata.json",
+                "varps.json": "varps.json",
+                "varbits.json": "varbits.json",
+                "objects.db": "objects.db.gz",
+            }
+
+            for local_name, remote_name in files.items():
+                url = f"{base_url}/{remote_name}"
+                dest = cache_dir / local_name
+                decompress = remote_name.endswith(".gz")
+
+                if not _downloadFile(url, dest, decompress_gz=decompress):
+                    print(f"\n❌ Failed to download {local_name}")
+                    print("\n" + "=" * 80)
+                    print("❌ Update failed")
+                    print("=" * 80)
+                    return False
 
             print("\n" + "=" * 80)
             print("✅ Game data updated successfully!")
@@ -122,13 +145,13 @@ def main():
         epilog="""
 Examples:
   # Update all resources
-  python -m shadowlib._internal.scraper.resource_updater
+  python -m shadowlib._internal.updater.resources
 
   # Force update
-  python -m shadowlib._internal.scraper.resource_updater --force
+  python -m shadowlib._internal.updater.resources --force
 
   # Check status only
-  python -m shadowlib._internal.scraper.resource_updater --status
+  python -m shadowlib._internal.updater.resources --status
 """,
     )
 

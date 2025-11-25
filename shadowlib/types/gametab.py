@@ -5,7 +5,7 @@ Base GameTab class - parent class for all game tab modules.
 from enum import Enum
 
 from shadowlib.globals import getClient
-from shadowlib.utilities.geometry import Area
+from shadowlib.types.box import Box
 
 
 class GameTab(Enum):
@@ -44,8 +44,8 @@ class GameTabs:
             client (Optional[Any]): An optional Client instance. If None, uses the global Client.
         Attributes:
             client (Any): The Client instance used by the GameTab.
-            bounds (Area): The bounding Area for the GameTab.
-            tab_box_array (List[Area]): A list of Area objects representing the clickable regions for each tab.
+            bounds (Box): The bounding Box for the GameTab.
+            tab_box_array (List[Box]): A list of Box objects representing the clickable regions for each tab.
 
         Args:
             client: Optional Client instance. If None, uses global Client.
@@ -55,8 +55,8 @@ class GameTabs:
         y = 205
         w = 190
         h = 261
-        self.bounds = Area(x, y, x + w, y + h)
-        # init as list of Areas for each tab
+        self.bounds = Box(x, y, x + w, y + h)
+        # init as list of Boxes for each tab
         self.tab_box_array = []
 
         for i in range(7):
@@ -64,14 +64,14 @@ class GameTabs:
             tab_y = 170
             tab_w = 27
             tab_h = 32
-            self.tab_box_array.append(Area(tab_x, tab_y, tab_x + tab_w, tab_y + tab_h))
+            self.tab_box_array.append(Box(tab_x, tab_y, tab_x + tab_w, tab_y + tab_h))
 
         for i in range(7):
             tab_x = 530 + (i * 33)
             tab_y = 470
             tab_w = 27
             tab_h = 32
-            self.tab_box_array.append(Area(tab_x, tab_y, tab_x + tab_w, tab_y + tab_h))
+            self.tab_box_array.append(Box(tab_x, tab_y, tab_x + tab_w, tab_y + tab_h))
 
         # Swap index 8 and 9 because the game is weird
         self.tab_box_array[8], self.tab_box_array[9] = self.tab_box_array[9], self.tab_box_array[8]
