@@ -146,5 +146,4 @@ class GameTabs:
         tab_area = self.tab_box_array[self.TAB_TYPE.value]
         tab_area.click(duration=duration)
 
-        # TODO: Verify tab opened with new cache system when implemented
-        return self.isOpen()
+        return waitUntil(self.isOpen, timeout=0.1, poll_interval=0.001)

@@ -4,6 +4,7 @@ Menu module - handles right-click context menu interactions.
 
 import math
 import time
+from copy import deepcopy
 from typing import List, Tuple
 
 from shadowlib.globals import getClient
@@ -41,7 +42,7 @@ class Menu:
         return self.client.cache.getClientTickState().get("menu_open", False)
     
     def _getOptions(self, strip_colors: bool = True) -> Tuple[List[str], List[str]]:
-        data = self.client.cache.getMenuOptions()
+        data = deepcopy(self.client.cache.getMenuOptions())
         types = data["types"]
         options = data["options"]
         targets = data["targets"]
@@ -83,10 +84,41 @@ class Menu:
         def check_event(timestamp) -> bool:
             state = self.client.cache.getMenuClickedState()
             event_time = state.get("_timestamp", 0)
-            return (event_time - timestamp) > 0
-        
-        return timing.waitUntil(lambda: check_event(timestamp), timeout=timeout, poll_interval=0.001)
+            return (event_time - ts) > 0
 
+        return timing.waitUntil(lambda: checkEvent(timestamp), timeout=timeout, poll_interval=0.001)
+
+    def waitHasType(self, option_type: str, timeout: float = 0.5) -> bool:
+        """
+        Wait until the menu contains an option of the specified type.
+
+        Args:
+            option_type: Type to search for in menu options (e.g., "WIDGET_TARGET")
+            timeout: Maximum time to wait for option type to appear (seconds)
+        Returns:
+            True if option type found, False if timeout
+        """
+
+        def checkType() -> bool:
+            return self.hasType(option_type)
+
+        return timing.waitUntil(checkType, timeout=timeout, poll_interval=0.001)
+
+    def waitHasOption(self, option: str, timeout: float = 0.5) -> bool:
+        """
+        Wait until the menu contains an option of the specified type.
+
+        Args:
+            option: Text to search for in menu options (e.g., "Drop")
+            timeout: Maximum time to wait for option to appear (seconds)
+        Returns:
+            True if option found, False if timeout
+        """
+
+        def checkOption() -> bool:
+            return self.hasOption(option)
+
+        return timing.waitUntil(checkOption, timeout=timeout, poll_interval=0.001)
 
     def open(self, timeout: float = 0.5) -> bool:
         """
@@ -306,6 +338,23 @@ class Menu:
 
         return any(option_text_lower in option.lower() for option in options)
 
+    def hasType(self, option_type: str) -> bool:
+        """
+        Check if a menu option of a specific type exists (partial matching, case-insensitive).
+
+        Reads from game state cache (updated every tick).
+
+        Args:
+            option_type: Type to search for in menu options (e.g., "WIDGET_TARGET")
+
+        Returns:
+            True if option type exists, False otherwise
+        """
+        types = self.getTypes()
+        option_type_lower = option_type.lower()
+        print("checking for type:", option_type_lower, "in", types)  # --- IGNORE ---
+        return any(option_type_lower in t.lower() for t in types)
+
     def getOptionBox(self, option_index: int) -> Box | None:
         """
         Get the clickable box for a specific menu option.
@@ -466,9 +515,7 @@ class Menu:
         self.client.input.mouse.leftClick()
         return self.waitOptionClicked(option_text)
 
-    def clickOptionIndex(
-        self, option_index: int, button: str = "left", duration: float = 0.2
-    ) -> bool:
+    def clickOptionIndex(self, option_index: int) -> bool:
         """
         Click a menu option by its index.
 
@@ -476,8 +523,6 @@ class Menu:
 
         Args:
             option_index: Index of the option (0 = first/top option)
-            button: Mouse button ('left', 'right', 'middle')
-            duration: Time to take moving to the option (seconds)
 
         Returns:
             True if option was clicked, False if invalid index
@@ -487,7 +532,7 @@ class Menu:
             menu.clickOptionIndex(0)
 
             # Right-click the second option
-            menu.clickOptionIndex(1, button='right')
+            menu.clickOptionIndex(1
         """
         # Ensure menu is open
         if not self.open():
@@ -495,6 +540,28 @@ class Menu:
 
         box = self.getOptionBox(option_index)
         if box:
-            box.click(button=button)
+            box.click()
             return True
+        return False
+
+    def clickOptionType(self, option_type: str) -> bool:
+        """
+        Click a menu option by its type.
+
+        Automatically opens menu if not already open.
+
+        Args:
+            option_type: Type of the option, see https://static.runelite.net/runelite-api/apidocs/net/runelite/api/MenuAction.html
+
+        Returns:
+            True if option was clicked, False otherwise
+
+        Example:
+            # Click the "Use" option on any item
+            menu.clickOptionType("WIDGET_TARGET")
+        """
+        options, types = self._getOptions(strip_colors=True)
+        for i, t in enumerate(types):
+            if option_type.lower() in t.lower():
+                return self.clickOption(options[i])
         return False

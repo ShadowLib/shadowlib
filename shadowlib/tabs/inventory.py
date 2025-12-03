@@ -4,6 +4,7 @@ Inventory tab module.
 
 from typing import Any, Dict, List, Optional
 
+from shadowlib.globals import getClient
 from shadowlib.types.box import Box, createGrid
 from shadowlib.types.gametab import GameTab, GameTabs
 from shadowlib.types.item import Item
@@ -29,8 +30,11 @@ class Inventory(GameTabs, ItemContainer):
         """
         # Initialize GameTabs (which sets up client and tab areas)
         GameTabs.__init__(self, client)
-        # Initialize ItemContainer with inventory-specific values
-        ItemContainer.__init__(self, containerId=self.INVENTORY_ID, slotCount=28, items=[])
+        # Set ItemContainer attributes directly (can't call __init__ because items is a property)
+        self.containerId = self.INVENTORY_ID
+        self.slotCount = 28
+        self._items = []
+        self.client = getClient() if client is None else client
 
         # Create inventory slot grid (4 columns x 7 rows, 28 slots total)
         # Slot 0 starts at (563, 213), each slot is 36x32 pixels with 6px horizontal spacing
@@ -65,45 +69,7 @@ class Inventory(GameTabs, ItemContainer):
         """
         return self.slots[slot_index]
 
-    def hoverItem(self, item_id: int, random: bool = False) -> bool:
-        """
-        Hover over an item in the inventory.
-
-        Args:
-            item_id: The item ID to hover over
-            slot_index: Specific slot index (0-27) to hover. If None, hovers first found slot.
-            duration: Time to take moving to the item (seconds)
-
-        Returns:
-            True if item was found and hovered, False otherwise
-
-        Example:
-            # Hover over first logs found
-            inventory.hoverItem(1511)
-
-            # Hover over logs in slot 5
-            inventory.hoverItem(1511, slot_index=5)
-        """
-        if not random:
-            # Find first slot with the item
-            slot = self.findItemSlot(item_id)
-            if slot is None:
-                return False
-
-            # Hover the first slot
-            self.slots[slot].hover()
-            return True
-
-        found_slots = self.findItemSlots(item_id)
-        selected_slot = random.choice(found_slots) if found_slots else None
-        if selected_slot is None:
-            return False
-
-        # Hover the first slot
-        self.slots[selected_slot].hover()
-        return True
-
-    def hoverSlot(self, slot_index: int, duration: float = 0.2) -> bool:
+    def hoverSlot(self, slot_index: int) -> bool:
         """
         Hover over a specific inventory slot regardless of contents.
 
@@ -126,51 +92,75 @@ class Inventory(GameTabs, ItemContainer):
             return True
         return False
 
+    def hoverItem(self, item_id: int) -> bool:
+        """
+        Hover over an item in the inventory.
+
+        Args:
+            item_id: The item ID to hover over
+
+        Returns:
+            True if item was found and hovered, False otherwise
+
+        Example:
+            # Hover over first logs found
+            inventory.hoverItem(client.ItemID.LOGS)
+        """
+        found_slots = self.findItemSlots(item_id)
+        if not found_slots:
+            return False
+
+        # Hover the first found slot
+        if self.hoverSlot(found_slots[0]):
+            return self.client.interactions.menu.waitHasOption("Examine")
+
+    def clickSlot(
+        self, slot_index: int, option: str | None = None, type: str | None = None
+    ) -> bool:
+        """
+        Click a specific inventory slot.
+
+        Args:
+            slot_index: Slot index (0-27) to click
+            option: Specific menu option to click (if any)
+            type: Specific menu type to click (if any)
+
+        Returns:
+            True if slot was clicked successfully, False otherwise
+
+        Example:
+            # Click slot 0 (top-left)
+            inventory.clickSlot(0)
+
+            # Click "Use" option on slot 5
+            inventory.clickSlot(5, option="Use")
+        """
+        if not self.hoverSlot(slot_index):
+            return False
+
+        if option:
+            return self.client.interactions.menu.clickOption(option)
+        if type:
+            return self.client.interactions.menu.clickOptionType(type)
+
+        self.client.input.mouse.leftClick()
+        return True
+
     def clickItem(
         self,
         item_id: int,
-        slot_index: int | None = None,
-        button: str = "left",
-        duration: float = 0.2,
+        option: str | None = None,
+        type: str | None = None,
     ) -> bool:
         """
         Click an item in the inventory.
 
-        Args:
-            item_id: The item ID to click
-            slot_index: Specific slot index (0-27) to click. If None, clicks first found slot.
-            button: Mouse button to use ('left' or 'right')
-            duration: Time to take moving to the item (seconds)
-
-        Returns:
-            True if item was found and clicked, False otherwise
-
-        Example:
-            # Click first logs found
-            inventory.clickItem(1511)
-
-            # Right-click logs in slot 5
-            inventory.clickItem(1511, slot_index=5, button='right')
         """
-        if slot_index is not None:
-            # Click specific slot
-            if 0 <= slot_index < 28 and self.hoverSlot(slot_index):
-                items = self.getItemIds()
-                if items[slot_index] == item_id:
-                    self.slots[slot_index].click(button=button)
-                    return True
+        slot = self.findItemSlot(item_id)
+        if slot is None:
             return False
 
-        # Find first slot with the item
-        slots = self.findItemSlots(item_id)
-        if not slots:
-            return False
-
-        # Click the first slot
-        self.slots[slots[0]].click(
-            button=button,
-        )
-        return True
+        return self.clickSlot(slot, option=option, type=type)
 
     def isShiftDropEnabled(self) -> bool:
         """
@@ -188,23 +178,7 @@ class Inventory(GameTabs, ItemContainer):
         varbit_value = varps.getVarbitByName("DESKTOP_SHIFTCLICKDROP_ENABLED")
         return varbit_value == 1
 
-    def menuContainsDrop(self) -> bool:
-        """
-        Check if the right-click menu currently contains the "Drop" option.
-
-        Returns:
-            True if "Drop" is in the menu options, False otherwise
-
-        Example:
-            if inventory.menuContainsDrop():
-                print("Drop option is available in the menu!")
-        """
-        from ..menu import Menu
-
-        menu = Menu(self.client)
-        return menu.hasOption("Drop")
-
-    def waitDropOption(self, timeout: float = 1) -> bool:
+    def waitDropOption(self, timeout: float = 0.5) -> bool:
         """
         Wait until the right-click menu contains the "Drop" option.
 
@@ -223,9 +197,9 @@ class Inventory(GameTabs, ItemContainer):
         start_time = time.time()
 
         while time.time() - start_time < timeout:
-            if self.menuContainsDrop():
+            if self.client.interactions.menu.hasOption("Drop"):
                 return True
-            time.sleep(0.05)  # Small delay before checking again
+            time.sleep(0.001)  # Small delay before checking again
 
         return False
 
@@ -324,10 +298,6 @@ class Inventory(GameTabs, ItemContainer):
             # Drop entire inventory (all 28 slots)
             inventory.dropSlots(list(range(28)))
         """
-        from shadowlib.input.io import IO
-
-        from ..menu import Menu
-
         if not slot_indices:
             return 0
 
@@ -339,25 +309,32 @@ class Inventory(GameTabs, ItemContainer):
 
         if use_shift_drop:
             # Hold shift for all drops
-            io.keyboard.key_down("shift")
+            keyboard.hold("shift")
+
+        from time import perf_counter
 
         try:
-            menu = Menu(self.client)
-
             for slot_index in slot_indices:
                 # Hover over the slot
-                self.slots[slot_index].hover()
+                start_time = perf_counter()
+                self.hoverSlot(slot_index)
+                end_time = perf_counter()
+                print(f"Hovered slot {slot_index} in {end_time - start_time:.6f} seconds")
 
                 # Wait for Drop option to appear in menu
+                start_wait = perf_counter()
                 if not self.waitDropOption():
                     print("Drop option not found in menu, skipping item.")
                     continue  # Skip if Drop option not available
+                end_wait = perf_counter()
+                print(f"Waited for Drop option in {end_wait - start_wait:.6f} seconds")
 
                 # Click Drop option with fresh cache
-                if menu.clickOption(
-                    "Drop",
-                ):
+                start_click = perf_counter()
+                if self.client.interactions.menu.clickOption("Drop"):
                     dropped_count += 1
+                end_click = perf_counter()
+                print(f"Clicked Drop option in {end_click - start_click:.6f} seconds")
         finally:
             if use_shift_drop:
                 # Always release shift
@@ -365,9 +342,36 @@ class Inventory(GameTabs, ItemContainer):
 
         return dropped_count
 
-    def selectItem(
-        self, item_id: int, slot_index: int | None = None, duration: float = 0.2
-    ) -> bool:
+    def selectSlot(self, slot_index: int) -> bool:
+        """
+        Select a specific inventory slot (for 'Use item on...' actions).
+
+        Verifies the slot was successfully selected using cache validation.
+
+        Args:
+            slot_index: Slot index (0-27) to select
+
+        Returns:
+            True if slot was selected successfully, False otherwise
+
+        Example:
+            # Select item in slot 0 for use
+            if inventory.selectSlot(0):
+                print("Item in slot 0 selected!")
+        """
+        if not (0 <= slot_index < 28):
+            return False
+
+        # Click the item to select it
+        if not self.hoverSlot(slot_index):
+            return False
+        if not self.client.interactions.menu.waitHasType("WIDGET_TARGET"):
+            print("WIDGET_TARGET type not found in menu")
+            return False
+        print("WIDGET_TARGET type found in menu")
+        return self.client.interactions.menu.clickOptionType("WIDGET_TARGET")
+
+    def selectItem(self, item_id: int) -> bool:
         """
         Select an item in the inventory (for 'Use item on...' actions).
 
@@ -387,109 +391,35 @@ class Inventory(GameTabs, ItemContainer):
                 print("Tinderbox selected!")
         """
         # Find the slot to click
-        if slot_index is not None:
-            if not (0 <= slot_index < 28):
-                return False
-            items = self.getItemIds()
-            if items[slot_index] != item_id:
-                return False
-            target_slot = slot_index
-        else:
-            slots = self.findItemSlots(item_id)
-            if not slots:
-                return False
-            target_slot = slots[0]
+        target_slot = self.findItemSlot(item_id)
 
-        # Click the item to select it
-        self.slots[target_slot].click(
-            button="left",
-        )
+        if target_slot:
+            return self.selectSlot(target_slot)
+        return False
 
-        # TODO: Verify selection with new cache system when implemented
-        return True
-
-    def useItemOnItem(
+    def useSlotOnSlot(
         self,
-        item1_id: int,
-        item2_id: int,
-        item1_slot: int | None = None,
-        item2_slot: int | None = None,
-        duration: float = 0.2,
+        slot_1: int,
+        slot_2: int,
     ) -> bool:
         """
-        Use one item on another item in inventory.
-
-        Workflow:
-        1. Select first item (left-click)
-        2. Hover over second item
-        3. Click menu option with '->' (e.g., 'Use Coins -> Tinderbox')
-
-        Args:
-            item1_id: The item ID to use (will be selected first)
-            item2_id: The item ID to use it on (will be hovered)
-            item1_slot: Specific slot for first item. If None, uses first found.
-            item2_slot: Specific slot for second item. If None, uses first found.
-            duration: Time to take for mouse movements (seconds)
-
-        Returns:
-            True if items were used together successfully, False otherwise
-
-        Example:
-            # Use tinderbox on logs
-            inventory.useItemOnItem(590, 1511)  # Tinderbox on logs
-
-            # Use specific slots
-            inventory.useItemOnItem(995, 590, item1_slot=0, item2_slot=5)
+        Use one inventory slot on another (e.g. use item on item).
         """
-        from ..menu import Menu
-
-        # Step 1: Select the first item
-        if not self.selectItem(
-            item1_id,
-            slot_index=item1_slot,
-        ):
-            return False
-
-        # Step 2: Hover over the second item
-        if not self.hoverItem(
-            item2_id,
-            slot_index=item2_slot,
-        ):
-            return False
-
-        # Step 3: Click the menu option with '->' in it
-        menu = Menu(self.client)
-        options = menu.getOptions()
-
-        for option in options:
-            if "->" in option:
-                # Found the "Use X -> Y" option
-                return menu.clickOption(
-                    option,
-                )
+        if self.selectSlot(slot_1):
+            return self.clickSlot(slot_2, type="WIDGET_TARGET_ON_WIDGET")
 
         return False
 
-    def clickSlot(self, slot_index: int, button: str = "left", duration: float = 0.2) -> bool:
+    def useItemOnItem(self, item_1: int, item_2: int) -> bool:
         """
-        Click a specific inventory slot regardless of contents.
-
-        Args:
-            slot_index: Slot index (0-27) to click
-            button: Mouse button to use ('left' or 'right')
-            duration: Time to take moving to the slot (seconds)
-
-        Returns:
-            True if slot index is valid, False otherwise
-
-        Example:
-            # Click slot 0 (top-left)
-            inventory.clickSlot(0)
-
-            # Right-click slot 27 (bottom-right)
-            inventory.clickSlot(27, button='right')
+        Use one inventory item on another (e.g. use item on item).
         """
-        if 0 <= slot_index < 28:
-            self.slots[slot_index].click(button=button, duration=duration)
-            return True
+        slot_1 = self.findItemSlot(item_1)
+        print(slot_1)
+        slot_2 = self.findItemSlot(item_2)
+        print(slot_2)
+
+        if slot_1 is not None and slot_2 is not None:
+            return self.useSlotOnSlot(slot_1, slot_2)
+
         return False

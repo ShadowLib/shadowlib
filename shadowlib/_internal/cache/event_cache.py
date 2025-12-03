@@ -261,6 +261,11 @@ class EventCache:
             if not containers:
                 return None
 
+            if container_id in [93, 94] and not self._state.containers_initialized:
+                self._state.itemcontainers.get(93, None).populate()
+                self._state.itemcontainers.get(94, None).populate()
+                self._state.containers_initialized = True
+
             if container_id not in containers:
                 containers[container_id] = ItemContainer(container_id, -1)
 
@@ -288,7 +293,7 @@ class EventCache:
             List of menu option dicts
         """
         with self._lock:
-            menu_state = self._state.latest_states.get("post_menu_sort", {})
+            menu_state = self._state.latest_states.get("post_menu_sort", {}).copy()
             return menu_state
         
     def getClientTickState(self) -> Dict[str, Any]:

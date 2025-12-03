@@ -65,7 +65,7 @@ def sleep(min_seconds: float, max_seconds: float | None = None):
 
 
 def waitUntil(
-    condition: Callable[[], bool], timeout: float = 10.0, check_interval: float = 0.1
+    condition: Callable[[], bool], timeout: float = 10.0, poll_interval: float = 0.1
 ) -> bool:
     """
     Wait until a condition becomes true or timeout occurs.
@@ -73,7 +73,7 @@ def waitUntil(
     Args:
         condition: Function that returns True when condition is met
         timeout: Maximum time to wait in seconds
-        check_interval: How often to check condition in seconds
+        poll_interval: How often to check condition in seconds
 
     Returns:
         True if condition was met, False if timeout
@@ -92,7 +92,7 @@ def waitUntil(
     while time.time() - start_time < timeout:
         if condition():
             return True
-        time.sleep(check_interval)
+        time.sleep(poll_interval)
 
     return False
 

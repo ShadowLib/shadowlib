@@ -285,14 +285,12 @@ class ItemContainer:
             True if no empty slots remain (considers slotCount if known)
         """
         if self.slotCount > 0:
-            return self.getItemCount() >= self.slotCount
+            return self.getTotalCount() >= self.slotCount
         return all(item is not None for item in self.items)
 
     def __repr__(self) -> str:
         """String representation."""
-        itemCount = self.getItemCount()
-        slotInfo = f"/{self.slotCount}" if self.slotCount > 0 else ""
-        return f"ItemContainer(id={self.containerId}, items={itemCount}{slotInfo})"
+        return f"ItemContainer(id={self.containerId}, items={self.toDict()})"
 
     def __eq__(self, other) -> bool:
         """Check equality with another ItemContainer."""

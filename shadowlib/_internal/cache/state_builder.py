@@ -56,6 +56,7 @@ class StateBuilder:
         self.varps_initialized = False
         self.varcs_initialized = False
         self.skills_initialized = False
+        self.containers_initialized = False
 
         self.itemcontainers: Dict[int, ItemContainer] = {}
 
@@ -73,7 +74,7 @@ class StateBuilder:
             channel: Event channel name
             event: Event data dict
         """
-        print(f"Processing event on channel {channel}: {event}")
+        # print(f"Processing event on channel {channel}: {event}")
         if channel in LATEST_STATE_CHANNELS:
             # Latest-state: just overwrite
             event["_timestamp"] = time()
