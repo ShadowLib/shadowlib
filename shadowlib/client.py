@@ -59,14 +59,22 @@ class Client:
 
         self._connected = True
 
+        # Pre-import constants that the consumer thread needs during warmup.
+        # This prevents deadlock: if we don't import these now, the background
+        # thread will try to import them while we hold the import lock.
+        import contextlib
+
+        with contextlib.suppress(ImportError):
+            from shadowlib.generated.constants.varclient_id import VarClientID  # noqa: F401
+
         # Initialize event cache and consumer immediately
         from shadowlib._internal.cache.event_cache import EventCache
         from shadowlib._internal.events.consumer import EventConsumer
 
         self._event_cache = EventCache(event_history_size=100)
         self._event_consumer = EventConsumer(self._event_cache, warn_on_gaps=False)
-        # Don't wait for warmup during module import - causes deadlock due to import lock
-        self._event_consumer.start(wait_for_warmup=False)
+        # Start consumer and wait for warmup - safe now that constants are pre-imported
+        self._event_consumer.start(wait_for_warmup=True)
 
         # Register for automatic cleanup on exit
         from shadowlib._internal.cleanup import registerApiForCleanup
@@ -423,7 +431,3 @@ class Client:
 
 # Module-level singleton instance
 client = Client()
-
-# Wait for warmup after singleton creation (import lock is released at this point)
-# This ensures the cache is populated before any user code runs
-client.waitForWarmup()
