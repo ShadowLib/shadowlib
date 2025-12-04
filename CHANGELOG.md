@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.2.0](https://github.com/ShadowLib/shadowlib/compare/v3.1.1...v3.2.0) (2025-12-04)
+
+### ✨ Features
+
+* implement singleton pattern for RuneLiteAPI and add getOpenWidgets method to EventCache ([412613f](https://github.com/ShadowLib/shadowlib/commit/412613f3cc60a0e9c2ced9928c9295dc952b71a5))
+
+### 🐛 Bug Fixes
+
+* remove debug prints from state_builder that may cause import issues ([7c367ed](https://github.com/ShadowLib/shadowlib/commit/7c367ed061cfaf4ffec793b0503f53909640e13e))
+
 ## [3.1.1](https://github.com/ShadowLib/shadowlib/compare/v3.1.0...v3.1.1) (2025-12-04)
 
 ### 🐛 Bug Fixes
