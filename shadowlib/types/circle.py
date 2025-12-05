@@ -146,3 +146,22 @@ class Circle:
 
     def __repr__(self) -> str:
         return f"Circle(center=({self.centerX}, {self.centerY}), radius={self.radius})"
+
+    def debug(self, color: tuple[int, int, int] | str = "red", width: int = 2) -> None:
+        """
+        Visualize this circle on a fresh capture of the game window.
+
+        Args:
+            color: Outline color (RGB tuple or name)
+            width: Line width in pixels
+
+        Example:
+            >>> circle = Circle(150, 150, 50)
+            >>> circle.debug()  # Shows circle on game screenshot
+        """
+        from shadowlib._internal.visualizer import Visualizer
+
+        viz = Visualizer()
+        if viz.capture():
+            viz.drawCircle(self, color=color, width=width)
+            viz.render()

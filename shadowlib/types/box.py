@@ -178,6 +178,25 @@ class Box:
     def __repr__(self) -> str:
         return f"Box({self.x1}, {self.y1}, {self.x2}, {self.y2})"
 
+    def debug(self, color: tuple[int, int, int] | str = "red", width: int = 2) -> None:
+        """
+        Visualize this box on a fresh capture of the game window.
+
+        Args:
+            color: Outline color (RGB tuple or name)
+            width: Line width in pixels
+
+        Example:
+            >>> box = Box(100, 100, 200, 200)
+            >>> box.debug()  # Shows box on game screenshot
+        """
+        from shadowlib._internal.visualizer import Visualizer
+
+        viz = Visualizer()
+        if viz.capture():
+            viz.drawBox(self, color=color, width=width)
+            viz.render()
+
 
 def createGrid(
     startX: int,

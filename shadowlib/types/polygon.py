@@ -208,3 +208,22 @@ class Polygon:
 
     def __repr__(self) -> str:
         return f"Polygon({len(self.vertices)} vertices, area={self.area():.2f})"
+
+    def debug(self, color: tuple[int, int, int] | str = "red", width: int = 2) -> None:
+        """
+        Visualize this polygon on a fresh capture of the game window.
+
+        Args:
+            color: Outline color (RGB tuple or name)
+            width: Line width in pixels
+
+        Example:
+            >>> polygon = Polygon([Point(100, 100), Point(200, 100), Point(150, 200)])
+            >>> polygon.debug()  # Shows polygon on game screenshot
+        """
+        from shadowlib._internal.visualizer import Visualizer
+
+        viz = Visualizer()
+        if viz.capture():
+            viz.drawPolygon(self, color=color, width=width)
+            viz.render()

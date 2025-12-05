@@ -87,6 +87,25 @@ class Point:
     def __repr__(self) -> str:
         return f"Point({self.x}, {self.y})"
 
+    def debug(self, color: tuple[int, int, int] | str = "red", size: int = 5) -> None:
+        """
+        Visualize this point on a fresh capture of the game window.
+
+        Args:
+            color: Color (RGB tuple or name)
+            size: Size of the crosshair in pixels
+
+        Example:
+            >>> point = Point(150, 150)
+            >>> point.debug()  # Shows crosshair on game screenshot
+        """
+        from shadowlib._internal.visualizer import Visualizer
+
+        viz = Visualizer()
+        if viz.capture():
+            viz.drawPoint(self, color=color, size=size)
+            viz.render()
+
 
 @dataclass
 class Point3D:
