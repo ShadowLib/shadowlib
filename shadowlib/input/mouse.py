@@ -95,14 +95,13 @@ class Mouse:
         self.runelite.refreshWindowPosition()
         # temp override for performance testing
 
-        start_time = time.perf_counter()
+        time.perf_counter()
         pag.moveTo(
             x + self.runelite.getWindowOffset()[0],
             y + self.runelite.getWindowOffset()[1],
             _pause=False,
         )
         time.sleep(0.001)  # slight delay to ensure move completes
-        print(f"pag.moveTo took {time.perf_counter() - start_time:.6f} seconds")
         return
         # Validate coordinates
         self._validateCoordinates(x, y, safe)
@@ -246,13 +245,11 @@ class Mouse:
         """
         import time
 
-        start_time = time.perf_counter()
+        time.perf_counter()
         if x is not None and y is not None:
             self._moveTo(x, y, safe=safe)
-        print(f"move took {time.perf_counter() - start_time:.6f} seconds")
         self._clickButton("left")
-        end_time = time.perf_counter()
-        print(f"leftClick took {end_time - start_time:.6f} seconds")
+        time.perf_counter()
 
     def rightClick(self, x: int | None = None, y: int | None = None, safe: bool = True) -> None:
         """

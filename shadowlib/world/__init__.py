@@ -6,8 +6,10 @@ from shadowlib.world.projection import (
     EntityConfig,
     EntityTransform,
     Projection,
+    TileGrid,
     projection,
 )
+from shadowlib.world.scene import Scene, VisibleTiles, scene
 
 
 class World:
@@ -40,6 +42,11 @@ class World:
         """Get projection utility singleton."""
         return projection
 
+    @property
+    def scene(self) -> Scene:
+        """Get scene utility singleton."""
+        return scene
+
 
 # Module-level singleton instance
 world = World()
@@ -51,7 +58,11 @@ __all__ = [
     "GroundItems",
     "groundItems",
     "Projection",
+    "TileGrid",
     "projection",
+    "Scene",
+    "scene",
+    "VisibleTiles",
     "CameraState",
     "EntityConfig",
     "EntityTransform",

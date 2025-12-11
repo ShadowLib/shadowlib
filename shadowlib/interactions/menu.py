@@ -359,7 +359,6 @@ class Menu:
         """
         types = self.getTypes()
         option_type_lower = option_type.lower()
-        print("checking for type:", option_type_lower, "in", types)  # --- IGNORE ---
         return any(option_type_lower in t.lower() for t in types)
 
     def getOptionBox(self, option_index: int) -> Box | None:
@@ -401,10 +400,6 @@ class Menu:
         # Using x2 = x1 + width - 1 to avoid overlap (e.g., 100-114 = 15 pixels)
         option_x2 = option_x1 + (menu_width - 4) - 1
         option_y2 = option_y1 + 14  # 15 pixels total: y1 to y1+14 inclusive
-
-        print(
-            f"returning box for option {option_index}: ({option_x1}, {option_y1}, {option_x2}, {option_y2})"
-        )  # --- IGNORE ---
 
         return Box(option_x1, option_y1, option_x2, option_y2)
 
@@ -511,28 +506,23 @@ class Menu:
             # Click "Drop" option (will open menu if not default)
             menu.clickOption("Drop")
         """
-        print(f"Current options: {self.getOptions()}")  # --- IGNORE ---
         if self.isOpen():
-            print("Menu is already open")  # --- IGNORE ---
             self.hoverOption(option_text)
             client.input.mouse.leftClick()
             return self.waitOptionClicked(option_text) and self.waitMenuClosed()
 
         left_click_option = self.getLeftClickOption()
-        print(f"Left-click option: {left_click_option}")  # --- IGNORE ---
         if left_click_option is None:
             return False
 
         if option_text.lower() in left_click_option.lower():
             # It's the default! Just left-click at current position
-            print("Clicking default option directly")  # --- IGNORE ---
             client.input.mouse.leftClick()
             return self.waitOptionClicked(option_text)
 
         if not self.hasOption(option_text):
             return False
 
-        print("Opening menu to click option")  # --- IGNORE ---
         self.open()
         self.hoverOption(option_text)
         client.input.mouse.leftClick()

@@ -30,6 +30,7 @@ LATEST_STATE_CHANNELS = [
     "active_interfaces",  # Currently active interface information
     "world_entity",
     "camera_changed",
+    "scene_objects",
 ]
 
 # Doorbell file path - Java rings this after writing any event

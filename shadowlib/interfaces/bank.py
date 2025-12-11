@@ -98,7 +98,6 @@ class Bank(ItemContainer):
         self.item_widget = Widget(client.InterfaceID.Bankmain.ITEMS)
         self.item_widget.enable(WidgetFields.getBounds)
         self.item_widget.enable(WidgetFields.isHidden)
-        print(self.item_widget.mask)
 
     def __init__(self):
         """Override to prevent ItemContainer.__init__ from running."""
@@ -330,7 +329,6 @@ class Bank(ItemContainer):
         box = self.getItemBox(identifier)
 
         if box is None:
-            print("Opening correct tab for item...")
             tab_index = self.getTabIndex(identifier)
             if tab_index is None:
                 return None
@@ -341,9 +339,6 @@ class Bank(ItemContainer):
         scroll_count, scroll_up = self.getScrollCount(box)
 
         if scroll_count != 0:
-            print(
-                f"Scrolling {'up' if scroll_up else 'down'} {scroll_count} times to make item visible..."
-            )
             self.bank_area.hover()
 
             client.input.mouse.scroll(up=scroll_up, count=scroll_count)
@@ -518,23 +513,18 @@ class Bank(ItemContainer):
             quantity = bank_item.quantity
             noted = bank_item.noted
 
-            print(f"Withdrawing {quantity} of {identifier} (noted={noted})")
-
             if not self.containsItem(identifier):
-                print(f"Item {identifier} not found in bank!")
                 if safe:
                     raise ValueError(f"Item {identifier} not found in bank!")
                 return False
 
             slot = self.findItemSlot(identifier)
             if slot is not None and self.items[slot].quantity < quantity:
-                print(f"Not enough quantity of {identifier} in bank!")
                 if safe:
                     raise ValueError(f"Not enough quantity of {identifier} in bank!")
                 return False
 
             if not self.isOpen():
-                print("Bank is not open!")
                 return False
 
             area = self.makeItemVisible(identifier)
@@ -542,7 +532,6 @@ class Bank(ItemContainer):
             self.setNotedMode(noted)
 
             if area is None:
-                print(f"Item {identifier} not visible in bank!")
                 return False
 
             area.hover()

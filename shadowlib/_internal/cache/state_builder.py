@@ -104,6 +104,9 @@ class StateBuilder:
             channel: Event channel name
             event: Event data dict
         """
+        if channel in ["scene_objects"]:
+            print(f"got event {channel} ")  # --- IGNORE ---
+
         if channel in LATEST_STATE_CHANNELS:
             # Latest-state: just overwrite
             event["_timestamp"] = time()
@@ -112,6 +115,8 @@ class StateBuilder:
             # Handle projection-related events immediately
             if channel == "world_view_loaded":
                 self._processWorldViewLoaded(event)
+            elif channel in ("camera_changed", "world_entity"):
+                self._processCameraChanged()
         else:
             # Ring buffer: store history + update derived state
             self.recent_events[channel].append(event)
@@ -385,6 +390,12 @@ class StateBuilder:
             print(f"❌ Rebuild grounditems failed: {e}")
             return
 
+    def _processCameraChanged(self) -> None:
+        """Invalidate tile projection cache when camera changes."""
+        from shadowlib.world.projection import projection
+
+        projection.invalidate()
+
     def _processWorldViewLoaded(self, event: Dict[str, Any]) -> None:
         """
         Configure Projection singleton when world_view_loaded event is received.
@@ -447,8 +458,9 @@ class StateBuilder:
         baseX = event.get("base_x", 0)
         baseY = event.get("base_y", 0)
 
-        # Set scene data on projection singleton
+        # Set scene data on projection singleton and invalidate cache
         projection.setScene(tileHeights, bridgeFlags, baseX, baseY, sizeX, sizeY)
+        projection.invalidate()
 
         # Handle entity config (for WorldEntity instances)
         # When on top-level, bounds are all 0, which means identity transform

@@ -165,9 +165,62 @@ class EventCache:
 
     @property
     def position(self) -> Dict[str, int] | None:
-        """Get current player position {x, y, plane} from latest gametick state."""
+        """
+        Get current player world position {x, y, plane}.
+
+        Computes world coordinates from scene coordinates (gametick) + base coordinates
+        (world_view_loaded).
+
+        Returns:
+            Dict with 'x', 'y', 'plane' keys, or None if data unavailable.
+        """
         gametick = self._state.latest_states.get("gametick", {})
-        return gametick.get("position")
+        world_view = self._state.latest_states.get("world_view_loaded", {})
+
+        sceneX = gametick.get("sceneX")
+        sceneY = gametick.get("sceneY")
+        if sceneX is None or sceneY is None:
+            return None
+
+        baseX = world_view.get("base_x", 0)
+        baseY = world_view.get("base_y", 0)
+        plane = world_view.get("plane", 0)
+
+        return {"x": sceneX + baseX, "y": sceneY + baseY, "plane": plane}
+
+    @property
+    def scenePosition(self) -> Dict[str, int] | None:
+        """
+        Get current player scene position {sceneX, sceneY}.
+
+        Scene coordinates are relative to the loaded scene (0-103 range typically).
+
+        Returns:
+            Dict with 'sceneX', 'sceneY' keys, or None if data unavailable.
+        """
+        gametick = self._state.latest_states.get("gametick", {})
+        sceneX = gametick.get("sceneX")
+        sceneY = gametick.get("sceneY")
+        if sceneX is None or sceneY is None:
+            return None
+        return {"sceneX": sceneX, "sceneY": sceneY}
+
+    @property
+    def targetLocation(self) -> Dict[str, int] | None:
+        """
+        Get current destination location {x, y} in local coordinates.
+
+        This is where the player is walking/running to.
+
+        Returns:
+            Dict with 'x', 'y' keys (local coords), or None if not moving/unavailable.
+        """
+        gametick = self._state.latest_states.get("gametick", {})
+        x = gametick.get("target_location_x")
+        y = gametick.get("target_location_y")
+        if x is None or y is None:
+            return None
+        return {"x": x, "y": y}
 
     def getVarp(self, varp_id: int) -> int | None:
         """

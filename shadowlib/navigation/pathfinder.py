@@ -62,7 +62,7 @@ class Pathfinder:
         dest_packed = PackedPosition(destination_x, destination_y, destination_plane).packed
 
         result = client.api.invokeCustomMethod(
-            target="BridgeHelpers",
+            target="Pathfinder",
             method="getPathWithObstaclesPacked",
             signature="(I)[B",
             args=[dest_packed],

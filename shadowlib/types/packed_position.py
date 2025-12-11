@@ -1,10 +1,12 @@
 """
 PackedPosition type for efficient OSRS coordinate storage.
 
-Positions are packed into 32-bit integers:
+Positions are packed into 32-bit integers (matching Java Utils.packWorldPoint):
 - Bits [31-30]: Plane (2 bits, range 0-3)
-- Bits [29-15]: X coordinate (15 bits, range 0-32767)
-- Bits [14-0]: Y coordinate (15 bits, range 0-32767)
+- Bits [29-15]: Y coordinate (15 bits, range 0-32767)
+- Bits [14-0]: X coordinate (15 bits, range 0-32767)
+
+Java packing: (x & 0x7FFF) | ((y & 0x7FFF) << 15) | ((plane & 0x3) << 30)
 """
 
 from typing import Tuple
@@ -35,7 +37,7 @@ class PackedPosition:
         if not (0 <= plane <= 3):
             raise ValueError(f"Plane out of range: {plane} (must be 0-3)")
 
-        self._packed = ((plane & 0x3) << 30) | ((x & 0x7FFF) << 15) | (y & 0x7FFF)
+        self._packed = (x & 0x7FFF) | ((y & 0x7FFF) << 15) | ((plane & 0x3) << 30)
 
     @classmethod
     def fromPacked(cls, packed: int) -> "PackedPosition":
@@ -54,13 +56,13 @@ class PackedPosition:
 
     @property
     def x(self) -> int:
-        """Get X coordinate."""
-        return (self._packed >> 15) & 0x7FFF
+        """Get X coordinate (bits 0-14)."""
+        return self._packed & 0x7FFF
 
     @property
     def y(self) -> int:
-        """Get Y coordinate."""
-        return self._packed & 0x7FFF
+        """Get Y coordinate (bits 15-29)."""
+        return (self._packed >> 15) & 0x7FFF
 
     @property
     def plane(self) -> int:
@@ -131,6 +133,8 @@ def packPosition(x: int, y: int, plane: int) -> int:
     """
     Pack (x, y, plane) into a 32-bit unsigned integer.
 
+    Matches Java: (x & 0x7FFF) | ((y & 0x7FFF) << 15) | ((plane & 0x3) << 30)
+
     Args:
         x: X coordinate (0-32767)
         y: Y coordinate (0-32767)
@@ -139,7 +143,7 @@ def packPosition(x: int, y: int, plane: int) -> int:
     Returns:
         Packed position as unsigned 32-bit integer
     """
-    return ((plane & 0x3) << 30) | ((x & 0x7FFF) << 15) | (y & 0x7FFF)
+    return (x & 0x7FFF) | ((y & 0x7FFF) << 15) | ((plane & 0x3) << 30)
 
 
 def packPositionSigned(x: int, y: int, plane: int) -> int:
@@ -167,6 +171,8 @@ def unpackPosition(packed: int) -> Tuple[int, int, int]:
     """
     Unpack a 32-bit integer into (x, y, plane).
 
+    Matches Java: x = bits 0-14, y = bits 15-29, plane = bits 30-31
+
     Args:
         packed: Packed position (signed or unsigned)
 
@@ -177,8 +183,8 @@ def unpackPosition(packed: int) -> Tuple[int, int, int]:
     if packed < 0:
         packed = packed + 2**32
 
-    plane = (packed >> 30) & 0x3  # 2 bits
-    x = (packed >> 15) & 0x7FFF  # 15 bits
-    y = packed & 0x7FFF  # 15 bits
+    x = packed & 0x7FFF  # 15 bits (0-14)
+    y = (packed >> 15) & 0x7FFF  # 15 bits (15-29)
+    plane = (packed >> 30) & 0x3  # 2 bits (30-31)
 
     return (x, y, plane)
