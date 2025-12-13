@@ -112,22 +112,29 @@ class Box:
 
         return Point((self.x1 + self.x2) // 2, (self.y1 + self.y2) // 2)
 
-    def contains(self, point: "Point") -> bool:
+    def contains(self, other: "Point | Box") -> bool:
         """
-        Check if a point is within this box.
+        Check if a point or box is within this box.
 
         Args:
-            point: Point to check
+            other: Point or Box to check
 
         Returns:
-            True if point is inside box, False otherwise
+            True if other is inside this box, False otherwise
 
         Example:
             >>> box = Box(100, 100, 200, 200)
             >>> box.contains(Point(150, 150))  # True
-            >>> box.contains(Point(50, 50))  # False
+            >>> box.contains(Box(120, 120, 180, 180))  # True
         """
-        return self.x1 <= point.x < self.x2 and self.y1 <= point.y < self.y2
+        if isinstance(other, Box):
+            return (
+                self.x1 <= other.x1
+                and other.x2 <= self.x2
+                and self.y1 <= other.y1
+                and other.y2 <= self.y2
+            )
+        return self.x1 <= other.x < self.x2 and self.y1 <= other.y < self.y2
 
     def randomPoint(self) -> "Point":
         """
